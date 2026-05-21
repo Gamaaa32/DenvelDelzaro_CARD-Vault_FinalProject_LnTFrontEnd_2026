@@ -1,5 +1,6 @@
-import React, { useState, useContext, createContext, useReducer } from 'react';
-import { ChevronDown, LogOut, Plus, Trash2, Edit2, Eye, EyeOff, Search, Filter, ShoppingCart, Home, Settings, BarChart3, Package, Users, LogIn, UserPlus, X, AlertCircle, CheckCircle, TrendingUp, DollarSign, Star, Info } from 'lucide-react';
+import React, { useState, useEffect, useContext, createContext, useReducer } from 'react';
+import { ChevronDown, LogOut, Plus, Trash2, Edit2, Eye, EyeOff, Search, Filter, ShoppingCart, Home, Settings, BarChart3, Package, Users, LogIn, UserPlus, X, AlertCircle, CheckCircle, TrendingUp, DollarSign, Star, Info, CreditCard, QrCode, Building2, Copy, Clock, ArrowRight, ChevronLeft, Check } from 'lucide-react';
+import { auth, googleProvider, signInWithPopup } from './firebase';
 
 // ============================================================================
 // DUMMY DATA & CONTEXT
@@ -157,15 +158,40 @@ export default function CardVaultApp() {
     showNotif('Logged out successfully', 'success');
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const firebaseUser = result.user;
+      const newUser = {
+        id: firebaseUser.uid,
+        nama: firebaseUser.displayName || 'Google User',
+        email: firebaseUser.email,
+        role: 'user',
+        avatar: firebaseUser.photoURL,
+      };
+      setCurrentUser(newUser);
+      setShowAuth(false);
+      showNotif(`Welcome, ${newUser.nama}!`, 'success');
+    } catch (error) {
+      if (error.code !== 'auth/popup-closed-by-user') {
+        showNotif('Google sign-in failed. Check Firebase config.', 'error');
+      }
+    }
+  };
+
   // Render Auth Page
   if (showAuth) {
     return (
-      <AuthPage 
-        onLogin={handleLogin}
-        onRegister={handleRegister}
-        authMode={authMode}
-        setAuthMode={setAuthMode}
-      />
+      <>
+        {notification && <Notification notif={notification} />}
+        <AuthPage 
+          onLogin={handleLogin}
+          onRegister={handleRegister}
+          onGoogleLogin={handleGoogleLogin}
+          authMode={authMode}
+          setAuthMode={setAuthMode}
+        />
+      </>
     );
   }
 
@@ -211,7 +237,7 @@ export default function CardVaultApp() {
 // AUTH PAGE
 // ============================================================================
 
-function AuthPage({ onLogin, onRegister, authMode, setAuthMode }) {
+function AuthPage({ onLogin, onRegister, onGoogleLogin, authMode, setAuthMode }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [nama, setNama] = useState('');
@@ -320,6 +346,30 @@ function AuthPage({ onLogin, onRegister, authMode, setAuthMode }) {
               {authMode === 'login' ? 'Sign In' : 'Create Account'}
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="px-6 py-3">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-300"></div></div>
+              <div className="relative flex justify-center text-sm"><span className="px-4 bg-white text-gray-500">or</span></div>
+            </div>
+          </div>
+
+          {/* Google Sign-In */}
+          <div className="px-6 pb-4">
+            <button
+              onClick={onGoogleLogin}
+              className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 border-2 border-gray-300 text-gray-700 font-semibold py-3 rounded-lg transition"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Sign in with Google
+            </button>
+          </div>
 
           {/* Demo Credentials */}
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
@@ -489,7 +539,23 @@ function UserDashboard({ currentPage, setCurrentPage, detailCardId, setDetailCar
   };
 
   if (currentPage === 'cart') {
-    return <ShoppingCart_Page cart={cart} cartDispatch={cartDispatch} showNotif={showNotif} />;
+    return <ShoppingCart_Page cart={cart} cartDispatch={cartDispatch} showNotif={showNotif} setCurrentPage={setCurrentPage} />;
+  }
+
+  if (currentPage === 'checkout') {
+    return <CheckoutPage cart={cart} cartDispatch={cartDispatch} showNotif={showNotif} setCurrentPage={setCurrentPage} />;
+  }
+
+  if (currentPage === 'payment-bank') {
+    return <BankTransferPage cart={cart} cartDispatch={cartDispatch} showNotif={showNotif} setCurrentPage={setCurrentPage} />;
+  }
+
+  if (currentPage === 'payment-qris') {
+    return <QRISPage cart={cart} cartDispatch={cartDispatch} showNotif={showNotif} setCurrentPage={setCurrentPage} />;
+  }
+
+  if (currentPage === 'order-success') {
+    return <OrderSuccessPage setCurrentPage={setCurrentPage} />;
   }
 
   if (currentPage === 'vault') {
@@ -838,7 +904,7 @@ function PriceRow({ label, price, highlight }) {
 // SHOPPING CART PAGE
 // ============================================================================
 
-function ShoppingCart_Page({ cart, cartDispatch, showNotif }) {
+function ShoppingCart_Page({ cart, cartDispatch, showNotif, setCurrentPage }) {
   const total = cart.reduce((sum, item) => sum + (item.harga_vault * item.quantity), 0);
   const tax = total * 0.1;
   const finalTotal = total + tax;
@@ -848,8 +914,7 @@ function ShoppingCart_Page({ cart, cartDispatch, showNotif }) {
       showNotif('Your cart is empty', 'error');
       return;
     }
-    showNotif(`Order placed! Total: $${finalTotal.toFixed(2)}. Thank you for your purchase!`, 'success');
-    cartDispatch({ type: 'CLEAR_CART' });
+    setCurrentPage('checkout');
   };
 
   return (
@@ -1021,6 +1086,470 @@ function StatCard({ icon, label, value }) {
         <div>
           <p className="text-sm text-gray-600">{label}</p>
           <p className="text-2xl font-black text-gray-900">{value}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// CHECKOUT PAGE
+// ============================================================================
+
+function CheckoutPage({ cart, cartDispatch, showNotif, setCurrentPage }) {
+  const total = cart.reduce((sum, item) => sum + (item.harga_vault * item.quantity), 0);
+  const tax = total * 0.1;
+  const shipping = 4.99;
+  const finalTotal = total + tax + shipping;
+
+  if (cart.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <ShoppingCart size={64} className="mx-auto text-gray-300 mb-6" />
+        <h2 className="text-2xl font-black text-gray-900 mb-3">Cart is Empty</h2>
+        <p className="text-gray-600 mb-8">Add some cards before checking out!</p>
+        <button onClick={() => setCurrentPage('dashboard')} className="bg-orange-600 hover:bg-orange-700 text-white font-bold px-8 py-3 rounded-lg transition">
+          Browse Cards
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <button onClick={() => setCurrentPage('cart')} className="mb-6 flex items-center gap-2 text-orange-600 hover:text-orange-700 font-semibold">
+        <ChevronLeft size={20} /> Back to Cart
+      </button>
+
+      <h1 className="text-4xl font-black text-gray-900 mb-8">Checkout</h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Order Summary */}
+        <div className="lg:col-span-1 order-2 lg:order-1">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm sticky top-24">
+            <h3 className="font-black text-lg text-gray-900 mb-4">Order Summary</h3>
+            <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
+              {cart.map(item => (
+                <div key={item.id} className="flex items-center gap-3">
+                  {isImageUrl(item.gambar) ? (
+                    <img src={item.gambar} alt={item.nama} className="w-10 h-14 object-contain rounded" />
+                  ) : (
+                    <span className="text-2xl">{item.gambar}</span>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-gray-900 truncate">{item.nama}</p>
+                    <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                  </div>
+                  <p className="font-bold text-sm text-gray-900">${(item.harga_vault * item.quantity).toFixed(2)}</p>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-gray-200 pt-4 space-y-2">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Subtotal</span><span className="font-semibold">${total.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Tax (10%)</span><span className="font-semibold">${tax.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Shipping</span><span className="font-semibold">${shipping.toFixed(2)}</span>
+              </div>
+              <div className="border-t border-gray-200 pt-3 flex justify-between">
+                <span className="font-black text-lg text-gray-900">Total</span>
+                <span className="font-black text-xl text-orange-600">${finalTotal.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Methods */}
+        <div className="lg:col-span-2 order-1 lg:order-2">
+          <h2 className="text-xl font-black text-gray-900 mb-6">Select Payment Method</h2>
+          <div className="space-y-4">
+            {/* Bank Transfer */}
+            <button
+              onClick={() => setCurrentPage('payment-bank')}
+              className="w-full bg-white rounded-xl border-2 border-gray-200 hover:border-orange-400 p-6 text-left transition group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="bg-blue-100 text-blue-600 rounded-xl p-4 group-hover:bg-blue-200 transition">
+                  <Building2 size={28} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-black text-lg text-gray-900">Bank Transfer</h3>
+                  <p className="text-sm text-gray-600">Transfer via Virtual Account — BCA, Mandiri, BNI</p>
+                </div>
+                <ArrowRight size={24} className="text-gray-400 group-hover:text-orange-600 transition" />
+              </div>
+            </button>
+
+            {/* QRIS */}
+            <button
+              onClick={() => setCurrentPage('payment-qris')}
+              className="w-full bg-white rounded-xl border-2 border-gray-200 hover:border-orange-400 p-6 text-left transition group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="bg-purple-100 text-purple-600 rounded-xl p-4 group-hover:bg-purple-200 transition">
+                  <QrCode size={28} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-black text-lg text-gray-900">QRIS</h3>
+                  <p className="text-sm text-gray-600">Scan QR code — GoPay, OVO, DANA, ShopeePay</p>
+                </div>
+                <ArrowRight size={24} className="text-gray-400 group-hover:text-orange-600 transition" />
+              </div>
+            </button>
+
+            {/* Credit Card (disabled) */}
+            <div className="w-full bg-gray-50 rounded-xl border-2 border-gray-200 p-6 text-left opacity-60 cursor-not-allowed">
+              <div className="flex items-center gap-4">
+                <div className="bg-gray-200 text-gray-500 rounded-xl p-4">
+                  <CreditCard size={28} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-black text-lg text-gray-500">Credit / Debit Card</h3>
+                  <p className="text-sm text-gray-400">Coming soon</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// BANK TRANSFER PAGE
+// ============================================================================
+
+function BankTransferPage({ cart, cartDispatch, showNotif, setCurrentPage }) {
+  const total = cart.reduce((sum, item) => sum + (item.harga_vault * item.quantity), 0);
+  const tax = total * 0.1;
+  const shipping = 4.99;
+  const finalTotal = total + tax + shipping;
+  const [selectedBank, setSelectedBank] = useState('bca');
+  const [copied, setCopied] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(86400);
+  const [vaNumber] = useState(`8801${Math.floor(1000000000 + Math.random() * 9000000000)}`);
+
+  const banks = {
+    bca: { name: 'BCA', icon: '🏦' },
+    mandiri: { name: 'Mandiri', icon: '🏛️' },
+    bni: { name: 'BNI', icon: '🏢' },
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev > 0 ? prev - 1 : 0);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(vaNumber).catch(() => {});
+    setCopied(true);
+    showNotif('Virtual Account number copied!', 'success');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleConfirm = () => {
+    cartDispatch({ type: 'CLEAR_CART' });
+    setCurrentPage('order-success');
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <button onClick={() => setCurrentPage('checkout')} className="mb-6 flex items-center gap-2 text-orange-600 hover:text-orange-700 font-semibold">
+        <ChevronLeft size={20} /> Back
+      </button>
+
+      <h1 className="text-3xl font-black text-gray-900 mb-8">Bank Transfer</h1>
+
+      {/* Bank Selection */}
+      <div className="flex gap-3 mb-6">
+        {Object.entries(banks).map(([key, bank]) => (
+          <button
+            key={key}
+            onClick={() => setSelectedBank(key)}
+            className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition border-2 ${
+              selectedBank === key
+                ? 'border-orange-500 bg-orange-50 text-orange-700'
+                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            {bank.icon} {bank.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Payment Details Card */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        {/* Timer */}
+        <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock size={20} />
+            <span className="font-semibold">Complete payment within</span>
+          </div>
+          <span className="font-black text-xl font-mono">{formatTime(timeLeft)}</span>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Bank Info */}
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Bank</p>
+            <p className="font-black text-xl text-gray-900">{banks[selectedBank].icon} {banks[selectedBank].name}</p>
+          </div>
+
+          {/* VA Number */}
+          <div className="bg-gray-50 rounded-xl p-4">
+            <p className="text-sm text-gray-500 mb-2">Virtual Account Number</p>
+            <div className="flex items-center justify-between">
+              <p className="font-black text-2xl text-gray-900 font-mono tracking-wider">{vaNumber}</p>
+              <button
+                onClick={handleCopy}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition ${
+                  copied ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                }`}
+              >
+                {copied ? <Check size={16} /> : <Copy size={16} />}
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+
+          {/* Amount */}
+          <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
+            <p className="text-sm text-gray-600 mb-1">Total Amount</p>
+            <p className="font-black text-3xl text-orange-600">${finalTotal.toFixed(2)}</p>
+          </div>
+
+          {/* Instructions */}
+          <div>
+            <h3 className="font-bold text-gray-900 mb-3">Payment Instructions</h3>
+            <div className="space-y-2 text-sm text-gray-700">
+              <p className="flex gap-2"><span className="bg-orange-100 text-orange-700 rounded-full w-6 h-6 flex items-center justify-center font-bold flex-shrink-0">1</span> Open your {banks[selectedBank].name} mobile banking app</p>
+              <p className="flex gap-2"><span className="bg-orange-100 text-orange-700 rounded-full w-6 h-6 flex items-center justify-center font-bold flex-shrink-0">2</span> Select "Transfer" → "Virtual Account"</p>
+              <p className="flex gap-2"><span className="bg-orange-100 text-orange-700 rounded-full w-6 h-6 flex items-center justify-center font-bold flex-shrink-0">3</span> Enter the Virtual Account number above</p>
+              <p className="flex gap-2"><span className="bg-orange-100 text-orange-700 rounded-full w-6 h-6 flex items-center justify-center font-bold flex-shrink-0">4</span> Confirm the amount and complete payment</p>
+            </div>
+          </div>
+
+          {/* Confirm Button */}
+          <button
+            onClick={handleConfirm}
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl transition text-lg"
+          >
+            I've Completed Payment
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// QRIS PAGE
+// ============================================================================
+
+function QRISPage({ cart, cartDispatch, showNotif, setCurrentPage }) {
+  const total = cart.reduce((sum, item) => sum + (item.harga_vault * item.quantity), 0);
+  const tax = total * 0.1;
+  const shipping = 4.99;
+  const finalTotal = total + tax + shipping;
+  const [status, setStatus] = useState('waiting');
+
+  useEffect(() => {
+    const timer1 = setTimeout(() => setStatus('verifying'), 4000);
+    const timer2 = setTimeout(() => {
+      setStatus('success');
+      cartDispatch({ type: 'CLEAR_CART' });
+    }, 6000);
+    const timer3 = setTimeout(() => setCurrentPage('order-success'), 7500);
+    return () => { clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3); };
+  }, []);
+
+  const QRCodeSVG = () => {
+    const size = 200;
+    const modules = 25;
+    const moduleSize = size / modules;
+    const rects = [];
+    for (let row = 0; row < modules; row++) {
+      for (let col = 0; col < modules; col++) {
+        const isTopLeft = row < 7 && col < 7;
+        const isTopRight = row < 7 && col >= modules - 7;
+        const isBottomLeft = row >= modules - 7 && col < 7;
+        const isFinderArea = isTopLeft || isTopRight || isBottomLeft;
+
+        let fill = false;
+        if (isFinderArea) {
+          const lr = isTopLeft ? row : (isTopRight ? row : row - (modules - 7));
+          const lc = isTopLeft ? col : (isTopRight ? col - (modules - 7) : col);
+          fill = lr === 0 || lr === 6 || lc === 0 || lc === 6 || (lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4);
+        } else {
+          fill = ((row * 7 + col * 13 + row * col) % 3) !== 0;
+        }
+
+        if (fill) {
+          rects.push(<rect key={`${row}-${col}`} x={col * moduleSize} y={row * moduleSize} width={moduleSize} height={moduleSize} fill="#1a1a2e" />);
+        }
+      }
+    }
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="rounded-lg">
+        <rect width={size} height={size} fill="white" />
+        {rects}
+      </svg>
+    );
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <button onClick={() => setCurrentPage('checkout')} className="mb-6 flex items-center gap-2 text-orange-600 hover:text-orange-700 font-semibold">
+        <ChevronLeft size={20} /> Back
+      </button>
+
+      <h1 className="text-3xl font-black text-gray-900 mb-8">QRIS Payment</h1>
+
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-4 text-center">
+          <p className="font-semibold">Scan QR to Pay</p>
+          <p className="text-purple-200 text-sm">GoPay • OVO • DANA • ShopeePay • LinkAja</p>
+        </div>
+
+        <div className="p-8 flex flex-col items-center">
+          <div className={`relative mb-6 p-4 border-4 rounded-2xl transition-all duration-500 ${
+            status === 'success' ? 'border-green-400 bg-green-50' :
+            status === 'verifying' ? 'border-yellow-400 bg-yellow-50 animate-pulse' :
+            'border-gray-200 bg-white'
+          }`}>
+            {status === 'success' ? (
+              <div className="w-[200px] h-[200px] flex items-center justify-center">
+                <div className="bg-green-500 rounded-full p-6">
+                  <Check size={64} className="text-white" />
+                </div>
+              </div>
+            ) : (
+              <>
+                <QRCodeSVG />
+                {status === 'verifying' && (
+                  <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-xl">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+                      <p className="font-bold text-sm text-gray-700">Verifying...</p>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="text-center mb-6">
+            {status === 'waiting' && (
+              <>
+                <p className="font-black text-xl text-gray-900 mb-1">Scan this QR Code</p>
+                <p className="text-gray-600 text-sm">Open your e-wallet app and scan to pay</p>
+                <div className="mt-3 flex items-center justify-center gap-2 text-orange-600">
+                  <div className="w-2 h-2 bg-orange-600 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-semibold">Waiting for payment...</span>
+                </div>
+              </>
+            )}
+            {status === 'verifying' && (
+              <>
+                <p className="font-black text-xl text-yellow-700 mb-1">Payment Detected!</p>
+                <p className="text-gray-600 text-sm">Verifying your payment...</p>
+              </>
+            )}
+            {status === 'success' && (
+              <>
+                <p className="font-black text-xl text-green-600 mb-1">Payment Successful! ✅</p>
+                <p className="text-gray-600 text-sm">Redirecting to order confirmation...</p>
+              </>
+            )}
+          </div>
+
+          <div className="bg-gray-50 rounded-xl p-4 w-full text-center">
+            <p className="text-sm text-gray-500 mb-1">Total Payment</p>
+            <p className="font-black text-3xl text-orange-600">${finalTotal.toFixed(2)}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// ORDER SUCCESS PAGE
+// ============================================================================
+
+function OrderSuccessPage({ setCurrentPage }) {
+  const [orderNumber] = useState(`CV-${Date.now().toString().slice(-8)}`);
+  const [showContent, setShowContent] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => setShowContent(true), 300);
+  }, []);
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className={`text-center transition-all duration-700 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+        <div className="mb-8">
+          <div className="inline-block bg-green-100 rounded-full p-6 mb-4">
+            <div className="bg-green-500 rounded-full p-4">
+              <Check size={48} className="text-white" />
+            </div>
+          </div>
+          <h1 className="text-4xl font-black text-gray-900 mb-3">Order Placed! 🎉</h1>
+          <p className="text-lg text-gray-600">Thank you for your purchase</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 mb-8 text-left">
+          <div className="flex justify-between items-center mb-6 pb-6 border-b border-gray-200">
+            <div>
+              <p className="text-sm text-gray-500">Order Number</p>
+              <p className="font-black text-xl text-gray-900 font-mono">{orderNumber}</p>
+            </div>
+            <div className="bg-green-100 text-green-700 px-4 py-2 rounded-full font-bold text-sm">
+              Confirmed
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Status</span>
+              <span className="font-semibold text-green-600">Payment Verified ✓</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Date</span>
+              <span className="font-semibold text-gray-900">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Estimated Delivery</span>
+              <span className="font-semibold text-gray-900">3-5 business days</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl border border-orange-200 p-6 mb-8">
+          <p className="text-sm text-orange-700 font-semibold mb-2">📦 What's Next?</p>
+          <p className="text-gray-700 text-sm">We're preparing your cards for shipping. You'll receive a tracking number via email once your order is dispatched.</p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <button onClick={() => setCurrentPage('dashboard')} className="bg-orange-600 hover:bg-orange-700 text-white font-bold px-8 py-3 rounded-xl transition">
+            Continue Shopping
+          </button>
+          <button onClick={() => setCurrentPage('vault')} className="bg-white hover:bg-gray-50 text-gray-700 font-bold px-8 py-3 rounded-xl border-2 border-gray-300 transition">
+            View My Vault
+          </button>
         </div>
       </div>
     </div>
