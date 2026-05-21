@@ -684,7 +684,10 @@ function UserDashboard({ currentPage, setCurrentPage, detailCardId, setDetailCar
 
 function CardItem({ card, onView, onAddCart, onAddVault }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition hover:scale-105 transform duration-300">
+    <div
+      onClick={onView}
+      className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition hover:scale-105 transform duration-300 cursor-pointer"
+    >
       {/* Card Image Area */}
       <div className="h-80 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center relative overflow-hidden group">
         {isImageUrl(card.gambar) ? (
@@ -725,26 +728,20 @@ function CardItem({ card, onView, onAddCart, onAddVault }) {
         </p>
 
         {/* Actions */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={onView}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold py-2 rounded-lg transition"
-          >
-            View
-          </button>
-          <button
-            onClick={onAddVault}
-            className="bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold py-2 rounded-lg transition flex items-center justify-center"
+            onClick={(e) => { e.stopPropagation(); onAddVault(); }}
+            className="bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"
             title="Add to My Vault"
           >
-            <Star size={18} />
+            <Star size={18} /> Vault
           </button>
           <button
-            onClick={onAddCart}
+            onClick={(e) => { e.stopPropagation(); onAddCart(); }}
             disabled={card.stok === 0}
-            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center"
+            className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"
           >
-            <ShoppingCart size={18} />
+            <ShoppingCart size={18} /> Cart
           </button>
         </div>
       </div>
