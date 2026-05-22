@@ -833,10 +833,10 @@ function CardDetailPage({ card, onBack, onAddToCart, onAddToVault, setShowGrader
               <div className="border-t border-gray-200 pt-3">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-gray-700">Market Average</span>
-                  <span className="font-black text-lg text-gray-900">${avgPrice.toFixed(2)}</span>
+                  <span className="font-black text-lg text-gray-900">${(Number(avgPrice) || 0).toFixed(2)}</span>
                 </div>
                 <p className="text-sm text-green-600 font-semibold mt-1">
-                  💰 You save ${savings.toFixed(2)} compared to CardTell
+                  💰 You save ${(Number(savings) || 0).toFixed(2)} compared to CardTell
                 </p>
               </div>
             </div>
@@ -914,7 +914,7 @@ function PriceRow({ label, price, highlight }) {
     <div className={`flex justify-between items-center p-3 rounded-lg ${highlight ? 'bg-orange-50 border-2 border-orange-300' : 'bg-gray-50'}`}>
       <span className={`font-semibold ${highlight ? 'text-orange-700' : 'text-gray-700'}`}>{label}</span>
       <span className={`font-black text-lg ${highlight ? 'text-orange-600' : 'text-gray-900'}`}>
-        ${price.toFixed(2)}
+        ${(Number(price) || 0).toFixed(2)}
       </span>
     </div>
   );
@@ -961,7 +961,7 @@ function ShoppingCart_Page({ cart, cartDispatch, showNotif, setCurrentPage }) {
                 <div className="flex-1">
                   <h3 className="font-black text-lg text-gray-900">{item.nama}</h3>
                   <p className="text-sm text-gray-600 mb-2">{item.ekspansi}</p>
-                  <p className="font-bold text-orange-600">${item.harga_vault.toFixed(2)}</p>
+                  <p className="font-bold text-orange-600">${(Number(item.harga_vault) || 0).toFixed(2)}</p>
                 </div>
                 <div className="flex flex-col items-end justify-between">
                   <div className="flex items-center gap-2">
@@ -1077,12 +1077,12 @@ function VaultPage({ vault, vaultDispatch, showNotif }) {
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-600">Per Unit</p>
-                <p className="font-bold text-orange-600 mb-2">${item.harga_vault.toFixed(2)}</p>
+                <p className="font-bold text-orange-600 mb-2">${(Number(item.harga_vault) || 0).toFixed(2)}</p>
                 <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-600">Total Value</p>
-                <p className="font-black text-2xl text-gray-900">${(item.harga_vault * item.quantity).toFixed(2)}</p>
+                <p className="font-black text-2xl text-gray-900">${((Number(item.harga_vault) || 0) * item.quantity).toFixed(2)}</p>
               </div>
               <button
                 onClick={() => vaultDispatch({ type: 'REMOVE_VAULT_CARD', payload: item.id })}
@@ -1160,7 +1160,7 @@ function CheckoutPage({ cart, cartDispatch, showNotif, setCurrentPage }) {
                     <p className="font-semibold text-sm text-gray-900 truncate">{item.nama}</p>
                     <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                   </div>
-                  <p className="font-bold text-sm text-gray-900">${(item.harga_vault * item.quantity).toFixed(2)}</p>
+                  <p className="font-bold text-sm text-gray-900">${((Number(item.harga_vault) || 0) * item.quantity).toFixed(2)}</p>
                 </div>
               ))}
             </div>
@@ -2094,13 +2094,13 @@ function AdminDashboard({ currentPage, setCurrentPage, showNotif, setShowGrader,
                     {card.nama}
                   </td>
                   <td className="px-6 py-4 text-gray-700">{card.ekspansi}</td>
-                  <td className="px-6 py-4 font-bold text-orange-600">${card.harga_vault.toFixed(2)}</td>
+                  <td className="px-6 py-4 font-bold text-orange-600">${(Number(card.harga_vault) || 0).toFixed(2)}</td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full font-bold text-sm ${card.stok > 5 ? 'bg-green-100 text-green-700' : card.stok > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
                       {card.stok}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-bold text-gray-900">${(card.harga_vault * card.stok).toFixed(2)}</td>
+                  <td className="px-6 py-4 font-bold text-gray-900">${((Number(card.harga_vault) || 0) * card.stok).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -2260,7 +2260,7 @@ function InventoryManager({ inventory, inventoryDispatch, showNotif }) {
                   <td className="px-6 py-4">
                     <span className="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded">{card.kondisi}</span>
                   </td>
-                  <td className="px-6 py-4 font-bold text-orange-600">${card.harga_vault.toFixed(2)}</td>
+                  <td className="px-6 py-4 font-bold text-orange-600">${(Number(card.harga_vault) || 0).toFixed(2)}</td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full font-bold text-sm ${card.stok > 5 ? 'bg-green-100 text-green-700' : card.stok > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
                       {card.stok}
