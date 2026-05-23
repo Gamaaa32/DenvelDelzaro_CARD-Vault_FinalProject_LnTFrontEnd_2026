@@ -3,7 +3,7 @@ CARD Vault adalah sebuah aplikasi web e-commerce dan pelacak portofolio (portfol
 Dikembangkan oleh Tim DenvelDelzaro yang beranggotakan :
 1. Nyoman Duta Gama Trinugraha Giri
 2. Denzel Delvaro Nugroho
-3. Christopher Djuhartono
+3. Christofer Djuhartono
 
 Penjelasan rinci :
 1. Teknologi & Framework yang Digunakan :
